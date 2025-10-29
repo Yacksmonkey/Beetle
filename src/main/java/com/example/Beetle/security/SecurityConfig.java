@@ -27,7 +27,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("🚀 Security filter chain initialized correctly");
+        System.out.println("Security filter chain initialized correctly");
 
         http
                 .csrf(csrf -> csrf.disable())

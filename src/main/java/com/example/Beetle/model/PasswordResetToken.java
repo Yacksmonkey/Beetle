@@ -15,7 +15,7 @@ public class PasswordResetToken {
     private String token;
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
 
     @Column(nullable = false)
@@ -30,18 +30,14 @@ public class PasswordResetToken {
     }
 
     public boolean isExpired() {
-        return expiryDate.isBefore(LocalDateTime.now());
+        return LocalDateTime.now().isAfter(expiryDate);
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
-
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
-
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
-
     public LocalDateTime getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
 }

@@ -13,7 +13,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public String adminDashboard() {
         return """
-                    🛡️ Admin Dashboard
+                    :) Admin Dashboard
                     Welcome, you have administrator access.
                     Here you can view statistics, manage users, etc.
                 """;

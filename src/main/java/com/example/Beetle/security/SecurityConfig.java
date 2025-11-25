@@ -12,7 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.http.HttpMethod;
 
 
 @Configuration
@@ -31,27 +31,25 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> {}) // CORS.
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                new AntPathRequestMatcher("/api/auth/login"),
-                                new AntPathRequestMatcher("/api/auth/register"),
-                                new AntPathRequestMatcher("/api/password/request-reset"),
-                                new AntPathRequestMatcher("/api/password/reset"),
-                                new AntPathRequestMatcher("/reset-password"),
-                                new AntPathRequestMatcher("/reset-password.html"),
-                                new AntPathRequestMatcher("/static/**"),
-                                new AntPathRequestMatcher("/css/**"),
-                                new AntPathRequestMatcher("/js/**"),
-                                new AntPathRequestMatcher("/images/**")
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/password/request-reset",
+                                "/api/password/reset"
+
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/preferences/**").permitAll()
+
+                        .anyRequest().permitAll()
+
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {

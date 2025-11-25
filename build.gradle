@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.6'
 	id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.example'
@@ -22,6 +23,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
+    //Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+
 
     // ORM
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -30,14 +34,19 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.security:spring-security-crypto'
+    testImplementation 'org.springframework.security:spring-security-test'
+
 
     // BASE DE DATOS
     runtimeOnly 'org.postgresql:postgresql'
 
+    // Testing dependencies (JUnit + Mockito)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+
+// Optional but helps when running tests from terminal in IntelliJ Free
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 
     // JWT (JSON Web Token)
@@ -58,12 +67,25 @@ dependencies {
     // JacksonFactory
     implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
 
+    compileOnly  'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+
+    testImplementation 'com.h2database:h2'
 
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+    }
+}
+

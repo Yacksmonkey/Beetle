@@ -36,8 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
+                                "/api/auth/google",
                                 "/api/password/request-reset",
                                 "/api/password/reset"
+
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/preferences/**").permitAll()

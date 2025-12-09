@@ -6,6 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
+
 @Configuration
 public class StartupSeeder {
 
@@ -41,6 +43,16 @@ public class StartupSeeder {
                         .level(1)
                         .active(true)
                         .build());
+
+                PreferenceCard music = repo.save(PreferenceCard.builder()
+                        .label("Music")
+                        .key("music")
+                        .emoji("🎵")
+                        .parentKey(null)
+                        .level(1)
+                        .active(true)
+                        .build());
+
 
 // Level 2 — Movie genres
                 PreferenceCard action = repo.save(PreferenceCard.builder()

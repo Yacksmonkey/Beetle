@@ -18,7 +18,7 @@ public class StarupLister {
     public void startup() {
         checkDatabaseConnection();
         System.out.println("Server is ready on port");
-        System.out.println("http://localhost:8080/users");
+        System.out.println("http://localhost:8080");
     }
 
     private void checkDatabaseConnection() {

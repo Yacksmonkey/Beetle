@@ -8,7 +8,7 @@ public class EmailService {
 
     private final GmailOAuthService gmailOAuthService;
 
-    @Value("${app.frontend.url:http://localhost:8080}")
+    @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendBaseUrl;
 
     public EmailService(GmailOAuthService gmailOAuthService) {
@@ -16,7 +16,7 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(String to, String token) {
-        String resetUrl = frontendBaseUrl + "/reset-password.html?token=" + token;
+        String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
 
         String subject = "Beetle - Password Reset Request";
         String html = """

@@ -24,7 +24,22 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(length = 20)
+    private String phone;
 
+    @Column(name = "picture_url", length = 500)
+    private String picture;
+
+    @Column(length = 255)
+    private String address;
+
+    @Column(length = 500)
+    private String bio;
+
+    @Column(name = "public_profile", nullable = false)
+    private boolean publicProfile = true;
+
+    // ROLES
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -32,7 +47,6 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-
 
     public User() {}
 
@@ -44,7 +58,8 @@ public class User {
         this.password = password;
     }
 
-    // --- Getters & Setters ---
+    // GETTERS & SETTERS
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -59,6 +74,27 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getPicture() { return picture; }
+    public void setPicture(String picture) { this.picture = picture; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+
+    public boolean isPublicProfile() {
+        return publicProfile;
+    }
+
+    public void setPublicProfile(boolean publicProfile) {
+        this.publicProfile = publicProfile;
+    }
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }

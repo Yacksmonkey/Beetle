@@ -4,7 +4,9 @@ import com.example.Beetle.model.Role;
 import com.example.Beetle.model.User;
 import com.example.Beetle.repository.RoleRepository;
 import com.example.Beetle.repository.UserRepository;
-import com.example.Beetle.security.JwtUtil;
+
+import com.example.Beetle.dto.UserUpdateRequest;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,41 +26,57 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtUtil jwtUtil;
 
 
-
-    // REGISTER USER
-    // ---------------------------
+    // REGISTER USER ----------------------------------------------------
     public User registerUser(User user) {
 
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already registered");
+        if (user.getEmail() == null || user.getEmail().isBlank())
+            throw new RuntimeException("Email is required");
+
+        if (user.getPassword() == null || user.getPassword().isBlank())
+            throw new RuntimeException("Password is required");
+
+        // If username is not provided, generate it from email
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
+            String baseUsername = user.getEmail().split("@")[0];
+            String username = baseUsername;
+            int counter = 1;
+
+            while (userRepository.existsByUsername(username)) {
+                username = baseUsername + counter;
+                counter++;
+            }
+
+            user.setUsername(username);
         }
 
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Username already taken");
+        // Ensure roles list is initialized
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+
         }
+
+        if (userRepository.existsByEmail(user.getEmail()))
+            throw new RuntimeException("Email already registered");
+
+        if (userRepository.existsByUsername(user.getUsername()))
+            throw new RuntimeException("Username already taken");
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Roles creation if missing
         Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
 
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
 
-        // Set admin accounts
         List<String> adminEmails = List.of("yacksmonkey@gmail.com");
         List<String> adminUsernames = List.of("yacksmonkey");
 
         if (adminEmails.contains(user.getEmail()) ||
                 adminUsernames.contains(user.getUsername())) {
-
             user.getRoles().add(adminRole);
-
         } else {
             user.getRoles().add(userRole);
         }
@@ -67,34 +85,30 @@ public class UserService {
     }
 
 
-    // LOGIN (Authentication)
-    // ---------------------------
 
+    // LOGIN ----------------------------------------------------
     public User findByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
     }
-
 
     public User authenticate(String email, String password) {
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
-        if (optionalUser.isEmpty()) {
+        if (optionalUser.isEmpty())
             return null;
-        }
 
         User user = optionalUser.get();
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword()))
             return null;
-        }
 
         return user;
     }
 
 
-    // CRUD operations
-    // ---------------------------
+
+    // CRUD ----------------------------------------------------
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -104,21 +118,37 @@ public class UserService {
     }
 
 
-    public User updateUser(Long id, User updatedUser) {
+
+    // ADMIN UPDATE: full user update --------------------------------------
+    public User updateUser(Long id, User updated) {
         return userRepository.findById(id)
                 .map(user -> {
 
-                    if (updatedUser.getName() != null)
-                        user.setName(updatedUser.getName());
+                    if (updated.getName() != null)
+                        user.setName(updated.getName());
 
-                    if (updatedUser.getUsername() != null)
-                        user.setUsername(updatedUser.getUsername());
+                    if (updated.getUsername() != null)
+                        user.setUsername(updated.getUsername());
 
-                    if (updatedUser.getEmail() != null)
-                        user.setEmail(updatedUser.getEmail());
+                    if (updated.getEmail() != null)
+                        user.setEmail(updated.getEmail());
 
-                    if (updatedUser.getPassword() != null)
-                        user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+                    if (updated.getPassword() != null)
+                        user.setPassword(passwordEncoder.encode(updated.getPassword()));
+
+                    if (updated.getPhone() != null)
+                        user.setPhone(updated.getPhone());
+
+                    if (updated.getAddress() != null)
+                        user.setAddress(updated.getAddress());
+
+                    if (updated.getBio() != null)
+                        user.setBio(updated.getBio());
+
+                    if (updated.getPicture() != null)
+                        user.setPicture(updated.getPicture());
+
+                    user.setPublicProfile(updated.isPublicProfile());
 
                     return userRepository.save(user);
                 })
@@ -126,50 +156,101 @@ public class UserService {
     }
 
 
-    //DELETE USER
-    //------------------------------------
 
+    // USER PROFILE UPDATE -----------------------------------------------
+    public User updateProfile(Long id, User updated) {
+        return userRepository.findById(id)
+                .map(user -> {
+
+                    if (updated.getPhone() != null)
+                        user.setPhone(updated.getPhone());
+
+                    if (updated.getAddress() != null)
+                        user.setAddress(updated.getAddress());
+
+                    if (updated.getBio() != null)
+                        user.setBio(updated.getBio());
+
+                    if (updated.getPicture() != null)
+                        user.setPicture(updated.getPicture());
+
+                    user.setPublicProfile(updated.isPublicProfile());
+
+                    return userRepository.save(user);
+
+                }).orElse(null);
+    }
+
+    //USER MY PROFILE UPDATE  -----------------------------------------------
+    public User updateMyProfile(Long userId, UserUpdateRequest request) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isEmpty()) return null;
+
+        User user = optionalUser.get();
+
+        if (request.getName() != null)
+            user.setName(request.getName());
+
+        if (request.getUsername() != null)
+            user.setUsername(request.getUsername());
+
+        if (request.getPicture() != null)
+            user.setPicture(request.getPicture());
+
+        if (request.getPublicProfile() != null)
+            user.setPublicProfile(request.getPublicProfile());
+
+        if (request.getPhone() != null)
+            user.setPhone(request.getPhone());
+
+        if (request.getAddress() != null)
+            user.setAddress(request.getAddress());
+
+        if (request.getBio() != null)
+            user.setBio(request.getBio());
+
+        return userRepository.save(user);
+    }
+
+
+
+    // DELETE ----------------------------------------------------
     public boolean deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            return false;
-        }
+        if (!userRepository.existsById(id)) return false;
         userRepository.deleteById(id);
         return true;
     }
 
-    //CREATE GOOGLE
-    //--------------------------
 
-    public User createGoogleUser(String email, String name) {
 
-        // Generate a base username from the email prefix
+    // GOOGLE USER CREATION -----------------------------------------------
+    public User createGoogleUser(String email, String name, String pictureUrl) {
+
         String baseUsername = email.split("@")[0];
         String username = baseUsername;
         int counter = 1;
 
-        // Ensure the username is unique
         while (userRepository.existsByUsername(username)) {
             username = baseUsername + counter;
             counter++;
         }
 
-        // Create the user object
         User user = new User();
         user.setEmail(email);
         user.setName(name);
         user.setUsername(username);
 
-        // Google users do not use a local password, but the field is NOT NULL
+        // Google accounts get a random password
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
 
-        // Assign ROLE_USER
+        user.setPicture(pictureUrl);
+
         Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
 
         user.getRoles().add(userRole);
 
-        // Save the new user in the database
         return userRepository.save(user);
     }
-
 }

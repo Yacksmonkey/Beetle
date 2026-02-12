@@ -27,7 +27,7 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "picture_url", length = 500)
+    @Column(name = "picture_url", length = 1000)
     private String picture;
 
     @Column(length = 255)

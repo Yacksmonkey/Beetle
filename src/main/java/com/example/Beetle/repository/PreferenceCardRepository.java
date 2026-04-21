@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PreferenceCardRepository extends JpaRepository<PreferenceCard, UUID> {
@@ -21,4 +22,6 @@ public interface PreferenceCardRepository extends JpaRepository<PreferenceCard, 
             @Param("parentKey") String parentKey,
             @Param("active") Boolean active
     );
+
+    Optional<PreferenceCard> findByKey(String key);
 }

@@ -5,6 +5,11 @@ import com.example.Beetle.model.User;
 import com.example.Beetle.model.Role;
 import com.example.Beetle.service.UserService;
 import com.example.Beetle.security.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import com.example.Beetle.dto.UserMeResponse;
+
+
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -14,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.Beetle.dto.UserUpdateRequest;
 
 import java.util.*;
 
@@ -31,7 +37,11 @@ public class UserController {
     // LOGIN
     // -------------------------
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<?> loginUser(
+            @RequestBody Map<String, String> loginRequest,
+            HttpServletResponse response
+    )
+    {
         String email = loginRequest.get("email");
         String password = loginRequest.get("password");
 
@@ -49,6 +59,14 @@ public class UserController {
                 user.getEmail(),
                 roles
         );
+        Cookie cookie = new Cookie("auth_token", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60); // 24h
+
+        response.addCookie(cookie);
+
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
@@ -63,26 +81,35 @@ public class UserController {
     // -------------------------
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
-        User created = userService.registerUser(user);
+        try {
+            User created = userService.registerUser(user);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "User registered successfully",
-                "userId", created.getId()
-        ));
+            return ResponseEntity.ok(Map.of(
+                    "message", "User registered successfully",
+                    "userId", created.getId()
+            ));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", ex.getMessage()
+            ));
+        }
     }
 
 
     // GOOGLE
     //--------------------------
     @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody GoogleAuthRequest request) {
+    public ResponseEntity<?> googleLogin(
+            @RequestBody GoogleAuthRequest request,
+            HttpServletResponse response
+    ) {
 
         String idTokenString = request.getGoogleToken();
 
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                 new NetHttpTransport(),
                 new GsonFactory()
-        ).setAudience(Collections.singletonList("911683984183-3rhume34n3v2qja16h1fk0p0orbq8a02.apps.googleusercontent.com"))
+        ).setAudience(Collections.singletonList("911683984183-dvd6d20059jceqmooeqrh7u08l1ob76r.apps.googleusercontent.com"))
                 .build();
 
         GoogleIdToken idToken;
@@ -91,7 +118,7 @@ public class UserController {
             idToken = verifier.verify(idTokenString);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Goole Id token verification failed");
+            return ResponseEntity.status(500).body("Google Id token verification failed");
         }
 
         if (idToken == null) {
@@ -105,7 +132,7 @@ public class UserController {
 
         User user = userService.findByEmail(email);
         if (user == null) {
-            user = userService.createGoogleUser(email, name);
+            user = userService.createGoogleUser(email, name, picture);
         }
 
         List<String> roles = user.getRoles().stream()
@@ -117,6 +144,15 @@ public class UserController {
                 user.getEmail(),
                 roles
         );
+
+        Cookie cookie = new Cookie("auth_token", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60); // 24h
+
+        response.addCookie(cookie);
+
 
 
         return ResponseEntity.ok(Map.of(
@@ -151,8 +187,46 @@ public class UserController {
                 : ResponseEntity.notFound().build();
     }
 
+    //GET ME
+    //-------------------------------
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<?> me(
+            @CookieValue(name = "auth_token", required = false) String token
+    ) {
+        if (token == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
 
-    // UPDATE USER
+        Long userId = jwtUtil.extractUserId(token);
+
+        return userService.getUserById(userId)
+                .map(user -> {
+                    List<String> roles = user.getRoles().stream()
+                            .map(Role::getName)
+                            .toList();
+
+                    return ResponseEntity.ok(
+                            new UserMeResponse(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getUsername(),
+                                    user.getEmail(),
+                                    user.getPicture(),
+                                    user.isPublicProfile(),
+                                    user.getPhone(),
+                                    user.getAddress(),
+                                    user.getBio(),
+                                    roles
+                            )
+                    );
+                })
+                .orElseGet(() -> ResponseEntity.status(404).build());
+    }
+
+
+
+    // PUT USER
     // -------------------------
     @PutMapping("/users/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -166,6 +240,49 @@ public class UserController {
                 ? ResponseEntity.ok(updated)
                 : ResponseEntity.notFound().build();
     }
+
+    // PUT ME
+    //----------------------------------------------------
+    @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<?> updateMe(
+            @CookieValue(name = "auth_token", required = false) String token,
+            @RequestBody UserUpdateRequest request
+    ) {
+        if (token == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        Long userId = jwtUtil.extractUserId(token);
+
+        User updated = userService.updateMyProfile(userId, request);
+
+        if (updated == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    //UPDATE PROFILE
+    //-----------------------------
+    @PutMapping("/profile")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<?> updateMyProfile(
+            @RequestHeader("Authorization") String auth,
+            @RequestBody User updated
+    ) {
+        String token = auth.replace("Bearer ", "");
+        Long userId = jwtUtil.extractUserId(token);
+
+        User saved = userService.updateProfile(userId, updated);
+
+        return saved != null
+                ? ResponseEntity.ok(saved)
+                : ResponseEntity.status(404).body("User not found");
+    }
+
 
 
     // DELETE USER (ADMIN)

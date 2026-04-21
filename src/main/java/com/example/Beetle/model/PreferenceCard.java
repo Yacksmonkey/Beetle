@@ -32,8 +32,8 @@ public class PreferenceCard {
     @Column(name = "card_key", nullable = false, length = 100, unique = true)
     private String key;
 
-    @Size(max = 10, message = "Emoji must be at most 10 characters")
-    @Column(length = 10)
+    @Size(max = 30, message = "Emoji must be at most 10 characters")
+    @Column(length = 30)
     private String emoji;
 
     @Size(max = 255, message = "Image URL must be at most 255 characters")
@@ -46,7 +46,7 @@ public class PreferenceCard {
 
     @NotNull(message = "Level is required")
     @Min(value = 1, message = "Level must be at least 1")
-    @Max(value = 4, message = "Level must be at most 4")
+    @Max(value = 5, message = "Level must be at most 5")
     @Column(nullable = false)
     private Integer level;
 

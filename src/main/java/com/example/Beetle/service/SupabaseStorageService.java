@@ -43,7 +43,7 @@ public class SupabaseStorageService {
 
         // Supabase Storage upload endpoint:
 
-        String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + objectPath;
+        String uploadUrl = supabaseUrl.trim() + "/storage/v1/object/" + bucket + "/" + objectPath;
 
         restClient.post()
                 .uri(uploadUrl)

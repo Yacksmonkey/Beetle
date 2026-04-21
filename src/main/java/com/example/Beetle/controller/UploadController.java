@@ -89,8 +89,8 @@ public class UploadController {
             );
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Upload failed");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Upload failed");
         }
     }
 }

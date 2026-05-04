@@ -23,8 +23,8 @@ WORKDIR /app
 # Copiar el JAR compilado
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Exponer puerto
+# Exponer puerto (informative)
 EXPOSE 8080
 
-# Comando de inicio
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Comando de inicio / Puerto Render
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=$PORT"]

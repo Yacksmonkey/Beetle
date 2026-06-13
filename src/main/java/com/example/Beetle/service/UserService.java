@@ -215,6 +215,12 @@ public class UserService {
 
 
 
+    // SEARCH USERS ----------------------------------------------------
+    public List<User> searchUsers(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return userRepository.searchUsers(query.trim());
+    }
+
     // DELETE ----------------------------------------------------
     public boolean deleteUser(Long id) {
         if (!userRepository.existsById(id)) return false;

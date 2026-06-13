@@ -109,6 +109,27 @@ public class FriendService {
         return friendshipRepository.findByUserOneIdOrUserTwoId(userId, userId);
     }
 
+    public List<FriendRequest> getIncomingRequests(Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("UserId is required");
+        }
+        return friendRequestRepository.findByReceiverUserId(userId);
+    }
+
+    public void rejectFriendRequest(Long userId, Long requestId) {
+        if (userId == null) throw new RuntimeException("UserId is required");
+        if (requestId == null) throw new RuntimeException("RequestId is required");
+
+        FriendRequest request = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Friend request not found"));
+
+        if (!userId.equals(request.getReceiverUserId())) {
+            throw new RuntimeException("Not allowed");
+        }
+
+        friendRequestRepository.deleteById(requestId);
+    }
+
     public boolean toggleLike(Long userId, Long historyId) {
         if (userId == null) throw new RuntimeException("UserId is required");
         if (historyId == null) throw new RuntimeException("HistoryId is required");

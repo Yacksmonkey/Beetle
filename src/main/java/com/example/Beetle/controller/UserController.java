@@ -187,6 +187,21 @@ public class UserController {
                 : ResponseEntity.notFound().build();
     }
 
+    // SEARCH USERS
+    // -------------------------
+    @GetMapping("/users/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<?> searchUsers(@RequestParam("q") String query) {
+        List<User> results = userService.searchUsers(query);
+        List<Map<String, Object>> safe = results.stream().map(u -> Map.of(
+                "id", u.getId(),
+                "name", u.getName(),
+                "username", u.getUsername(),
+                "picture", u.getPicture()
+        )).toList();
+        return ResponseEntity.ok(safe);
+    }
+
     //GET ME
     //-------------------------------
     @GetMapping("/me")

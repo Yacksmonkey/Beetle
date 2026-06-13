@@ -108,6 +108,60 @@ public class FriendController {
         return ResponseEntity.ok(items);
     }
 
+    @GetMapping("/requests/incoming")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<?> getIncomingRequests(
+            @CookieValue(name = "auth_token", required = false) String token
+    ) {
+        if (token == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        Long userId = jwtUtil.extractUserId(token);
+
+        var items = friendService.getIncomingRequests(userId).stream()
+                .map(r -> Map.of(
+                        "requestId", r.getId(),
+                        "senderUserId", r.getSenderUserId(),
+                        "senderUsername", friendService.getUsernameByUserId(r.getSenderUserId()),
+                        "senderPicture", friendService.getPictureByUserId(r.getSenderUserId()),
+                        "createdAt", r.getCreatedAt()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(items);
+    }
+
+    @DeleteMapping("/request/{requestId}")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<?> rejectFriendRequest(
+            @CookieValue(name = "auth_token", required = false) String token,
+            @PathVariable Long requestId
+    ) {
+        if (token == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        try {
+            Long userId = jwtUtil.extractUserId(token);
+            friendService.rejectFriendRequest(userId, requestId);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Friend request rejected successfully"
+            ));
+        } catch (RuntimeException ex) {
+            if ("Not allowed".equals(ex.getMessage())) {
+                return ResponseEntity.status(403).body(Map.of(
+                        "message", ex.getMessage()
+                ));
+            }
+
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", ex.getMessage()
+            ));
+        }
+    }
+
     @PostMapping("/history/{id}/like")
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<?> likeHistoryItem(

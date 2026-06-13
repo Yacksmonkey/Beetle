@@ -193,7 +193,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> searchUsers(@RequestParam("q") String query) {
         List<User> results = userService.searchUsers(query);
-        List<Map<String, Object>> safe = results.stream().map(u -> Map.of(
+        var safe = results.stream().map(u -> Map.of(
                 "id", u.getId(),
                 "name", u.getName(),
                 "username", u.getUsername(),

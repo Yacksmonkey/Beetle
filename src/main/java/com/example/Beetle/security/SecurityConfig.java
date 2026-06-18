@@ -25,11 +25,6 @@ public class SecurityConfig {
     private JwtUtil jwtUtil;
 
     @Bean
-    public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter();
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         System.out.println("Security filter chain initialized correctly");
 
@@ -52,7 +47,6 @@ public class SecurityConfig {
 
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(
                         new JwtCookieAuthFilter(jwtUtil),
                         UsernamePasswordAuthenticationFilter.class

@@ -4,7 +4,6 @@ import com.example.Beetle.dto.CommentCreateRequest;
 import com.example.Beetle.dto.CommentResponse;
 import com.example.Beetle.dto.FriendRequestAcceptRequest;
 import com.example.Beetle.dto.FriendRequestCreateRequest;
-import com.example.Beetle.dto.FriendResponse;
 import com.example.Beetle.model.Comment;
 import com.example.Beetle.security.JwtUtil;
 import com.example.Beetle.service.FriendService;
@@ -91,21 +90,7 @@ public class FriendController {
 
         Long userId = jwtUtil.extractUserId(token);
 
-        var items = friendService.getFriends(userId).stream()
-                .map(f -> {
-                    Long friendId = f.getUserOneId().equals(userId)
-                            ? f.getUserTwoId()
-                            : f.getUserOneId();
-
-                    return new FriendResponse(
-                            friendId,
-                            friendService.getUsernameByUserId(friendId),
-                            friendService.getPictureByUserId(friendId)
-                    );
-                })
-                .toList();
-
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(friendService.getFriendResponses(userId));
     }
 
     @GetMapping("/requests/incoming")

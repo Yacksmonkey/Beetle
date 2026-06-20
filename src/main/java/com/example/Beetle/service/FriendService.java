@@ -1,12 +1,15 @@
 package com.example.Beetle.service;
 
+import com.example.Beetle.dto.FriendResponse;
 import com.example.Beetle.model.*;
 import com.example.Beetle.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FriendService {
@@ -107,6 +110,35 @@ public class FriendService {
             throw new RuntimeException("UserId is required");
         }
         return friendshipRepository.findByUserOneIdOrUserTwoId(userId, userId);
+    }
+
+    public List<FriendResponse> getFriendResponses(Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("UserId is required");
+        }
+
+        List<Friendship> friendships = friendshipRepository.findByUserOneIdOrUserTwoId(userId, userId);
+
+        List<Long> friendIds = friendships.stream()
+                .map(f -> f.getUserOneId().equals(userId) ? f.getUserTwoId() : f.getUserOneId())
+                .toList();
+
+        if (friendIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, User> userMap = userRepository.findAllById(friendIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        return friendships.stream()
+                .map(f -> {
+                    Long friendId = f.getUserOneId().equals(userId) ? f.getUserTwoId() : f.getUserOneId();
+                    User friend = userMap.get(friendId);
+                    String username = friend != null ? friend.getUsername() : "unknown";
+                    String picture = friend != null ? friend.getPicture() : null;
+                    return new FriendResponse(friendId, username, picture);
+                })
+                .toList();
     }
 
     public List<FriendRequest> getIncomingRequests(Long userId) {

@@ -17,7 +17,7 @@ public class WebConfig {
                         .allowedOrigins(
                                 "http://localhost:3000",
                                 "http://localhost:3001",
-                                "https://beetle-delta.vercel.app"
+                                "https://beetle-frontend.vercel.app"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
